@@ -160,7 +160,7 @@
               <div class="canvas-toolbar"><div><h2>PC 页面结构</h2><span>1360px 设计宽度</span></div><div><button class="device-button active"><el-icon><Monitor /></el-icon></button><button class="device-button"><el-icon><Iphone /></el-icon></button><el-divider direction="vertical" /><span>80%</span></div></div>
               <div class="page-canvas">
                 <div class="hero-block"><span>NN</span><div><small>PUBG</small><strong>金秋双节补给行动</strong><em>9.25 - 10.11</em></div></div>
-                <div class="canvas-nav"><span v-for="module in navigableModules" :key="module.id">{{ module.name }}</span></div>
+                <div class="canvas-nav"><span v-for="(label, index) in pageNavigationLabels" :key="`${label}-${index}`">{{ label }}</span></div>
                 <div v-for="(module, index) in modules" :key="module.id" class="canvas-module" :class="{ disabled: !module.enabled, selected: selectedModuleId === module.id }" @click="openModuleConfig(module)">
                   <div class="drag-handle"><el-icon><Rank /></el-icon></div>
                   <span :class="['module-icon', module.type]"><el-icon><component :is="moduleTypeIcons[module.type]" /></el-icon></span>
@@ -304,7 +304,7 @@
             <div class="drawer-section-heading"><div><h3>已上传背景</h3><p>图片按列表顺序从上到下拼接</p></div><el-button :icon="Sort">调整排序</el-button></div>
             <div class="background-segment-list drawer-segment-list">
               <div v-for="(segment, index) in currentBackgroundSegments" :key="segment.name">
-                <button class="segment-preview-button" :aria-label="`预览图片 ${segment.name}`" @click="previewBackgroundSegment(segment)">
+                <button class="segment-preview-button" :aria-label="`预览图片 ${segment.name}`" @click="previewImage(segment)">
                   <img class="segment-thumb segment-preview-image" :src="segment.url" :alt="segment.name" />
                 </button>
                 <p><strong>{{ segment.name }}</strong><small>{{ segment.size }}</small></p>
@@ -313,6 +313,91 @@
               </div>
               <div v-if="currentBackgroundSegments.length === 0" class="background-empty-state">尚未上传背景图，请先上传 PC 或 H5 背景素材。</div>
             </div>
+          </template>
+
+          <template v-else-if="selectedModule.type === 'banner'">
+            <div class="background-config-intro banner-config-intro">
+              <el-icon><Picture /></el-icon>
+              <p>此模块仅包含一张活动 Banner 图和一个 Logo。重新上传会替换对应素材。</p>
+            </div>
+            <div class="banner-asset-grid">
+              <section class="banner-asset-card">
+                <div class="banner-asset-heading"><div><h3>Banner 图片</h3><p>上传一张活动主视觉图</p></div><span>1 张</span></div>
+                <el-upload class="banner-asset-uploader" drag action="#" :auto-upload="false" :show-file-list="false" accept="image/png,image/jpeg,image/webp" :on-change="handleBannerImageUpload">
+                  <el-icon class="upload-icon"><UploadFilled /></el-icon>
+                  <div class="upload-copy"><strong>上传 Banner 图片</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
+                </el-upload>
+                <div v-if="bannerAssets.banner" class="banner-asset-preview">
+                  <button :aria-label="`预览图片 ${bannerAssets.banner.name}`" @click="previewImage(bannerAssets.banner)"><img :src="bannerAssets.banner.url" :alt="bannerAssets.banner.name" /></button>
+                  <div><strong>{{ bannerAssets.banner.name }}</strong><small>{{ bannerAssets.banner.size }}</small></div>
+                </div>
+              </section>
+
+              <section class="banner-asset-card">
+                <div class="banner-asset-heading"><div><h3>Logo</h3><p>上传一个品牌 Logo</p></div><span>1 个</span></div>
+                <el-upload class="banner-asset-uploader" drag action="#" :auto-upload="false" :show-file-list="false" accept="image/png,image/jpeg,image/webp" :on-change="handleLogoImageUpload">
+                  <el-icon class="upload-icon"><UploadFilled /></el-icon>
+                  <div class="upload-copy"><strong>上传 Logo</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
+                </el-upload>
+                <div v-if="bannerAssets.logo" class="banner-asset-preview logo-asset-preview">
+                  <button :aria-label="`预览图片 ${bannerAssets.logo.name}`" @click="previewImage(bannerAssets.logo)"><img :src="bannerAssets.logo.url" :alt="bannerAssets.logo.name" /></button>
+                  <div><strong>{{ bannerAssets.logo.name }}</strong><small>{{ bannerAssets.logo.size }}</small></div>
+                </div>
+              </section>
+            </div>
+          </template>
+
+          <template v-else-if="selectedModule.type === 'navigation'">
+            <div class="background-config-intro banner-config-intro">
+              <el-icon><Picture /></el-icon>
+              <p>可添加多个菜单入口，每个入口分别配置菜单名称、选中图和未选中图；箭头为整个导航栏共用一张，吸顶后可单独设置背景色。</p>
+            </div>
+            <section class="banner-asset-card navigation-menu-card">
+              <div class="banner-asset-heading"><div><h3>菜单入口</h3><p>每个入口独立配置名称及两种状态图片</p></div><el-button type="primary" plain :icon="Plus" @click="addNavigationEntry">添加入口</el-button></div>
+              <div class="navigation-entry-list">
+                <section v-for="(entry, index) in navigationEntries" :key="entry.id" class="navigation-entry-card">
+                  <div class="navigation-entry-row">
+                    <span class="navigation-entry-index">{{ String(index + 1).padStart(2, '0') }}</span>
+                    <el-input v-model="entry.label" :aria-label="`第 ${index + 1} 个导航入口名称`" placeholder="菜单名称" />
+                    <el-button :icon="Delete" aria-label="删除导航入口" :disabled="navigationEntries.length === 1" @click="removeNavigationEntry(index)" />
+                  </div>
+                  <div class="navigation-entry-assets">
+                    <section v-for="assetSlot in navigationEntryAssetSlots" :key="assetSlot.key" class="navigation-entry-asset">
+                      <div class="banner-asset-heading"><div><h4>{{ assetSlot.title }}</h4><p>{{ entry.label || `菜单入口 ${index + 1}` }}</p></div><span>1 张</span></div>
+                      <el-upload class="banner-asset-uploader" drag action="#" :auto-upload="false" :show-file-list="false" accept="image/png,image/jpeg,image/webp" :on-change="navigationEntryUploadHandlers[entry.id][assetSlot.key]">
+                        <el-icon class="upload-icon"><UploadFilled /></el-icon>
+                        <div class="upload-copy"><strong>上传{{ assetSlot.title }}</strong><p>支持 PNG、JPG、WebP</p></div>
+                      </el-upload>
+                      <div v-if="entry[assetSlot.assetKey]" class="banner-asset-preview">
+                        <button :aria-label="`预览图片 ${entry[assetSlot.assetKey]?.name}`" @click="previewImage(entry[assetSlot.assetKey]!)"><img :src="entry[assetSlot.assetKey]?.url" :alt="entry[assetSlot.assetKey]?.name" /></button>
+                        <div><strong>{{ entry[assetSlot.assetKey]?.name }}</strong><small>{{ entry[assetSlot.assetKey]?.size }}</small></div>
+                      </div>
+                    </section>
+                  </div>
+                </section>
+              </div>
+            </section>
+            <div class="banner-asset-grid navigation-asset-grid">
+              <section class="banner-asset-card">
+                <div class="banner-asset-heading"><div><h3>导航箭头图</h3><p>整条导航栏共用一张箭头图片</p></div><span>1 张</span></div>
+                <el-upload class="banner-asset-uploader" drag action="#" :auto-upload="false" :show-file-list="false" accept="image/png,image/jpeg,image/webp" :on-change="handleNavigationArrowUpload">
+                  <el-icon class="upload-icon"><UploadFilled /></el-icon>
+                  <div class="upload-copy"><strong>上传导航箭头图</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
+                </el-upload>
+                <div v-if="navigationAssets.arrow" class="banner-asset-preview logo-asset-preview">
+                  <button :aria-label="`预览图片 ${navigationAssets.arrow.name}`" @click="previewImage(navigationAssets.arrow)"><img :src="navigationAssets.arrow.url" :alt="navigationAssets.arrow.name" /></button>
+                  <div><strong>{{ navigationAssets.arrow.name }}</strong><small>{{ navigationAssets.arrow.size }}</small></div>
+                </div>
+              </section>
+            </div>
+            <section class="banner-asset-card navigation-color-card">
+              <div class="banner-asset-heading"><div><h3>吸顶背景色</h3><p>页面滚动后导航栏固定在顶部时使用</p></div></div>
+              <div class="navigation-color-control">
+                <el-color-picker v-model="navigationStickyBackground" show-alpha />
+                <el-input v-model="navigationStickyBackground" aria-label="吸顶背景色" placeholder="#FFFFFF" />
+                <span class="navigation-color-swatch" :style="{ backgroundColor: navigationStickyBackground || 'transparent' }">预览</span>
+              </div>
+            </section>
           </template>
 
           <template v-else>
@@ -337,7 +422,7 @@
       <img class="background-preview-full-image" :src="backgroundPreviewUrl" :alt="backgroundPreviewName" />
     </el-dialog>
 
-    <el-drawer v-model="previewDrawer" title="活动实时预览" size="520px"><div class="preview-device"><div class="preview-browser"><span></span><span></span><span></span><small>activity.nn.com/preview/11025</small></div><div class="preview-hero"><small>PUBG</small><strong>金秋双节<br />补给行动</strong><span>9.25 — 10.11</span></div><div class="preview-nav"><span v-for="module in navigableModules" :key="module.id">{{ module.name }}</span></div><div v-for="module in contentModules" :key="module.id" class="preview-section"><span :class="['module-icon', module.type]"><el-icon><component :is="moduleTypeIcons[module.type]" /></el-icon></span><div><strong>{{ module.name }}</strong><p>{{ module.description }}</p></div></div><div class="preview-rules"><strong>活动说明</strong><pre>{{ activityRulesText }}</pre></div></div></el-drawer>
+    <el-drawer v-model="previewDrawer" title="活动实时预览" size="520px"><div class="preview-device"><div class="preview-browser"><span></span><span></span><span></span><small>activity.nn.com/preview/11025</small></div><div class="preview-hero"><small>PUBG</small><strong>金秋双节<br />补给行动</strong><span>9.25 — 10.11</span></div><div class="preview-nav"><span v-for="(label, index) in pageNavigationLabels" :key="`${label}-${index}`">{{ label }}</span></div><div v-for="module in contentModules" :key="module.id" class="preview-section"><span :class="['module-icon', module.type]"><el-icon><component :is="moduleTypeIcons[module.type]" /></el-icon></span><div><strong>{{ module.name }}</strong><p>{{ module.description }}</p></div></div><div class="preview-rules"><strong>活动说明</strong><pre>{{ activityRulesText }}</pre></div></div></el-drawer>
   </div>
 </template>
 
@@ -355,10 +440,10 @@ import {
 } from '@element-plus/icons-vue'
 import { activities as seedActivities, initialModules, initialPrizes, initialTasks, navigationItems } from './mock'
 import { navigationPaths } from './navigation'
-import type { ActivityModule, ActivityRecord, ActivityStatus, ModuleType } from './types'
+import type { ActivityModule, ActivityRecord, ActivityStatus, ModuleType, NavigationMenuEntry, UploadedImageAsset } from './types'
 
 const iconMap: Record<string, Component> = { DataBoard, Calendar, SetUp, List, Present, Picture, Promotion, TrendCharts }
-const moduleTypeIcons: Record<ModuleType, Component> = { background: Picture, exchange: Goods, sign: Calendar, task: List, lottery: MagicStick, invite: User, community: Connection, event: Medal, rules: Document }
+const moduleTypeIcons: Record<ModuleType, Component> = { background: Picture, banner: Picture, navigation: Sort, exchange: Goods, sign: Calendar, task: List, lottery: MagicStick, invite: User, community: Connection, event: Medal, rules: Document }
 const pageTitleMap: Record<string, string> = { overview: '工作台', activities: '活动管理', editor: '页面编排', tasks: '任务中心', prizes: '奖品与奖池', assets: '素材中心', publish: '发布审核', analytics: '数据看板', settings: '系统设置', help: '帮助中心' }
 const statusOptions: ActivityStatus[] = ['进行中', '待发布', '草稿', '已结束']
 const templateOptions = ['经典补给模板', '完整互动模板', '金秋小队模板', '社区盲盒模板']
@@ -389,6 +474,15 @@ const prizes = ref(structuredClone(initialPrizes))
 const activityForm = reactive({ name: 'PUBG 金秋双节补给行动', code: 'PUBG_AUTUMN_2026', displayTime: [new Date(2026, 8, 25), new Date(2026, 9, 11, 23, 59)], timezone: 'Asia/Shanghai', devices: ['PC', 'H5'], owner: '周沐', template: '金秋小队模板' })
 const newActivityForm = reactive({ name: '', template: '完整互动模板', device: 'PC + H5' })
 const backgroundSegments = reactive({ pc: [], h5: [] } as Record<'pc' | 'h5', Array<{ name: string; size: string; url: string }>>)
+const bannerAssets = reactive<{ banner: UploadedImageAsset | null; logo: UploadedImageAsset | null }>({ banner: null, logo: null })
+const navigationAssets = reactive<{ arrow: UploadedImageAsset | null }>({ arrow: null })
+const navigationStickyBackground = ref('#FFFFFF')
+const navigationEntries = reactive<NavigationMenuEntry[]>([{ id: 'navigation-entry-1', label: '活动首页', inactiveImage: null, activeImage: null }])
+const navigationEntryAssetSlots = [
+  { key: 'inactive' as const, assetKey: 'inactiveImage' as const, title: '未选中图' },
+  { key: 'active' as const, assetKey: 'activeImage' as const, title: '选中图' },
+]
+const navigationEntryUploadHandlers = reactive<Record<string, ReturnType<typeof createNavigationEntryUploadHandlers>>>({ 'navigation-entry-1': createNavigationEntryUploadHandlers('navigation-entry-1') })
 const activityRulesText = ref(`活动时间：9月21日-10月18日
 
 1.积分规则：用户可通过完成活动任务等方式获得并累计活动积分，活动积分可继承至后续NN x PUBG 活动中使用；
@@ -418,6 +512,8 @@ const templateCards = [
 ]
 const availableModules = [
   { type: 'background' as ModuleType, name: '页面背景', description: 'PC/H5 头图与分段背景', icon: Picture },
+  { type: 'banner' as ModuleType, name: '活动 Banner', description: '单张 Banner 主视觉与 Logo 上传', icon: Picture },
+  { type: 'navigation' as ModuleType, name: '活动导航', description: '多菜单入口、首项图片、箭头和吸顶背景色', icon: Sort },
   { type: 'exchange' as ModuleType, name: '积分兑换', description: '积分商城与活动奖品兑换', icon: Goods },
   { type: 'sign' as ModuleType, name: '每日签到', description: '日历签到与连续奖励', icon: Calendar },
   { type: 'task' as ModuleType, name: '任务中心', description: '任务执行器与领奖', icon: List },
@@ -457,8 +553,10 @@ const filteredActivities = computed(() => activities.value.filter((activity) => 
 }))
 const selectedModule = computed(() => modules.value.find((module) => module.id === selectedModuleId.value))
 const enabledModules = computed(() => modules.value.filter((module) => module.enabled))
-const contentModules = computed(() => enabledModules.value.filter((module) => module.type !== 'background'))
+const contentModules = computed(() => enabledModules.value.filter((module) => module.type !== 'background' && module.type !== 'navigation'))
 const navigableModules = computed(() => contentModules.value.filter((module) => module.type !== 'rules'))
+/** 导航模块启用时展示运营配置的多入口菜单，否则沿用旧版从业务模块生成的导航名称。 */
+const pageNavigationLabels = computed(() => enabledModules.value.some((module) => module.type === 'navigation') ? navigationEntries.map((entry) => entry.label || '未命名入口') : navigableModules.value.map((module) => module.name))
 const currentBackgroundSegments = computed(() => backgroundSegments[backgroundDevice.value])
 const enabledTaskCount = computed(() => tasks.value.filter((task) => task.enabled).length)
 const filteredTasks = computed(() => tasks.value.filter((task) => {
@@ -523,6 +621,26 @@ const addModule = (item: typeof availableModules[number]) => {
   openModuleConfig(module)
 }
 
+/** 为菜单列表新增一个入口，并为该入口创建独立的选中图、未选中图上传处理器。 */
+const addNavigationEntry = () => {
+  const nextNumber = navigationEntries.length + 1
+  const id = `navigation-entry-${Date.now()}-${nextNumber}`
+  navigationEntries.push({ id, label: `菜单入口 ${nextNumber}`, inactiveImage: null, activeImage: null })
+  navigationEntryUploadHandlers[id] = createNavigationEntryUploadHandlers(id)
+}
+
+/** 删除指定导航菜单入口及其两张状态图片并释放预览资源，同时至少保留一个菜单入口。 */
+const removeNavigationEntry = (index: number) => {
+  if (navigationEntries.length <= 1 || index < 0 || index >= navigationEntries.length) return
+  const [removedEntry] = navigationEntries.splice(index, 1)
+  if (removedEntry) {
+    for (const asset of [removedEntry.inactiveImage, removedEntry.activeImage]) {
+      if (asset?.url.startsWith('blob:')) URL.revokeObjectURL(asset.url)
+    }
+    delete navigationEntryUploadHandlers[removedEntry.id]
+  }
+}
+
 /**
  * 打开指定模块的宽幅配置抽屉。
  * 画布只承担结构编排，复杂表单统一放入抽屉，避免配置字段挤压页面结构的可视空间。
@@ -540,10 +658,66 @@ const handleBackgroundUpload = (file: import('element-plus').UploadFile) => {
   currentBackgroundSegments.value.push({ name: file.name, size: `尺寸待识别 · ${sizeInKb} KB`, url: previewUrl })
 }
 
-/** 将指定背景素材放入独立预览弹窗，便于查看已上传图片的完整构图细节。 */
-const previewBackgroundSegment = (segment: { name: string; url: string }) => {
-  backgroundPreviewName.value = segment.name
-  backgroundPreviewUrl.value = segment.url
+/** 保存 Banner 或 Logo 图片到各自独立的素材槽位，新上传文件会替换该槽位原有素材。 */
+const storeBannerAsset = (file: import('element-plus').UploadFile, target: 'banner' | 'logo') => {
+  if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
+  const previousAsset = bannerAssets[target]
+  if (previousAsset?.url.startsWith('blob:')) URL.revokeObjectURL(previousAsset.url)
+  bannerAssets[target] = {
+    name: file.name,
+    size: `${Math.max(1, Math.round(file.raw.size / 1024))} KB`,
+    url: URL.createObjectURL(file.raw),
+  }
+}
+
+/** 接收活动 Banner 上传控件的文件，并将它保存到唯一的 Banner 图片槽位。 */
+const handleBannerImageUpload = (file: import('element-plus').UploadFile) => storeBannerAsset(file, 'banner')
+
+/** 接收 Logo 上传控件的文件，并将它保存到唯一的品牌 Logo 槽位。 */
+const handleLogoImageUpload = (file: import('element-plus').UploadFile) => storeBannerAsset(file, 'logo')
+
+/** 保存导航箭头图到唯一的全局箭头素材槽位，并释放被替换的本地预览地址。 */
+const storeNavigationArrowAsset = (file: import('element-plus').UploadFile) => {
+  if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
+  const previousAsset = navigationAssets.arrow
+  if (previousAsset?.url.startsWith('blob:')) URL.revokeObjectURL(previousAsset.url)
+  navigationAssets.arrow = {
+    name: file.name,
+    size: `${Math.max(1, Math.round(file.raw.size / 1024))} KB`,
+    url: URL.createObjectURL(file.raw),
+  }
+}
+
+/** 接收导航箭头装饰图片，并保存到独立箭头素材槽位。 */
+const handleNavigationArrowUpload = (file: import('element-plus').UploadFile) => storeNavigationArrowAsset(file)
+
+/** 按菜单入口 ID 保存对应的选中/未选中图片，并回收被替换素材的本地预览地址。 */
+const storeNavigationEntryAsset = (file: import('element-plus').UploadFile, entryId: string, state: 'inactive' | 'active') => {
+  if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
+  const entry = navigationEntries.find((item) => item.id === entryId)
+  if (!entry) return
+  const assetKey = state === 'active' ? 'activeImage' : 'inactiveImage'
+  const previousAsset = entry[assetKey]
+  if (previousAsset?.url.startsWith('blob:')) URL.revokeObjectURL(previousAsset.url)
+  entry[assetKey] = {
+    name: file.name,
+    size: `${Math.max(1, Math.round(file.raw.size / 1024))} KB`,
+    url: URL.createObjectURL(file.raw),
+  }
+}
+
+/** 为指定菜单入口生成各自的图片上传处理器，确保每个入口只更新自己的两张状态图。 */
+function createNavigationEntryUploadHandlers(entryId: string) {
+  return {
+    inactive: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, entryId, 'inactive'),
+    active: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, entryId, 'active'),
+  }
+}
+
+/** 将背景、Banner 或 Logo 图片放入独立预览弹窗，便于查看已上传素材的完整构图。 */
+const previewImage = (asset: { name: string; url: string }) => {
+  backgroundPreviewName.value = asset.name
+  backgroundPreviewUrl.value = asset.url
   backgroundPreviewVisible.value = true
 }
 

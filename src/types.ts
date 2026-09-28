@@ -2,6 +2,8 @@ export type ActivityStatus = '进行中' | '待发布' | '草稿' | '已结束'
 export type DeviceScope = 'PC + H5' | '仅 PC' | '仅 H5'
 export type ModuleType =
   | 'background'
+  | 'banner'
+  | 'navigation'
   | 'exchange'
   | 'sign'
   | 'task'
@@ -34,6 +36,19 @@ export interface ActivityModule {
   enabled: boolean
   device: DeviceScope
   warning?: string
+}
+
+export interface UploadedImageAsset {
+  name: string
+  size: string
+  url: string
+}
+
+export interface NavigationMenuEntry {
+  id: string
+  label: string
+  inactiveImage: UploadedImageAsset | null
+  activeImage: UploadedImageAsset | null
 }
 
 export interface TaskRecord {
