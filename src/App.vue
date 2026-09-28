@@ -318,7 +318,11 @@
           <template v-else-if="selectedModule.type === 'banner'">
             <div class="background-config-intro banner-config-intro">
               <el-icon><Picture /></el-icon>
-              <p>此模块仅包含一张活动 Banner 图和一个 Logo。重新上传会替换对应素材。</p>
+              <p>PC 与 H5 各自配置一张活动 Banner 图和一个 Logo，切换终端不会覆盖另一端的素材。</p>
+            </div>
+            <div class="background-device-tabs module-device-tabs">
+              <button :class="{ active: bannerDevice === 'pc' }" @click="bannerDevice = 'pc'"><el-icon><Monitor /></el-icon>PC 配置</button>
+              <button :class="{ active: bannerDevice === 'h5' }" @click="bannerDevice = 'h5'"><el-icon><Iphone /></el-icon>H5 配置</button>
             </div>
             <div class="banner-asset-grid">
               <section class="banner-asset-card">
@@ -327,9 +331,9 @@
                   <el-icon class="upload-icon"><UploadFilled /></el-icon>
                   <div class="upload-copy"><strong>上传 Banner 图片</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
                 </el-upload>
-                <div v-if="bannerAssets.banner" class="banner-asset-preview">
-                  <button :aria-label="`预览图片 ${bannerAssets.banner.name}`" @click="previewImage(bannerAssets.banner)"><img :src="bannerAssets.banner.url" :alt="bannerAssets.banner.name" /></button>
-                  <div><strong>{{ bannerAssets.banner.name }}</strong><small>{{ bannerAssets.banner.size }}</small></div>
+                <div v-if="currentBannerAssets.banner" class="banner-asset-preview">
+                  <button :aria-label="`预览图片 ${currentBannerAssets.banner.name}`" @click="previewImage(currentBannerAssets.banner)"><img :src="currentBannerAssets.banner.url" :alt="currentBannerAssets.banner.name" /></button>
+                  <div><strong>{{ currentBannerAssets.banner.name }}</strong><small>{{ currentBannerAssets.banner.size }}</small></div>
                 </div>
               </section>
 
@@ -339,9 +343,9 @@
                   <el-icon class="upload-icon"><UploadFilled /></el-icon>
                   <div class="upload-copy"><strong>上传 Logo</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
                 </el-upload>
-                <div v-if="bannerAssets.logo" class="banner-asset-preview logo-asset-preview">
-                  <button :aria-label="`预览图片 ${bannerAssets.logo.name}`" @click="previewImage(bannerAssets.logo)"><img :src="bannerAssets.logo.url" :alt="bannerAssets.logo.name" /></button>
-                  <div><strong>{{ bannerAssets.logo.name }}</strong><small>{{ bannerAssets.logo.size }}</small></div>
+                <div v-if="currentBannerAssets.logo" class="banner-asset-preview logo-asset-preview">
+                  <button :aria-label="`预览图片 ${currentBannerAssets.logo.name}`" @click="previewImage(currentBannerAssets.logo)"><img :src="currentBannerAssets.logo.url" :alt="currentBannerAssets.logo.name" /></button>
+                  <div><strong>{{ currentBannerAssets.logo.name }}</strong><small>{{ currentBannerAssets.logo.size }}</small></div>
                 </div>
               </section>
             </div>
@@ -350,7 +354,11 @@
           <template v-else-if="selectedModule.type === 'navigation'">
             <div class="background-config-intro banner-config-intro">
               <el-icon><Picture /></el-icon>
-              <p>可添加多个菜单入口，每个入口分别配置菜单名称、选中图和未选中图；箭头为整个导航栏共用一张，吸顶后可单独设置背景色。</p>
+              <p>PC 与 H5 分别维护菜单名称、各菜单的选中/未选中图、导航箭头和吸顶背景色，字段结构保持一致。</p>
+            </div>
+            <div class="background-device-tabs module-device-tabs">
+              <button :class="{ active: navigationDevice === 'pc' }" @click="navigationDevice = 'pc'"><el-icon><Monitor /></el-icon>PC 配置</button>
+              <button :class="{ active: navigationDevice === 'h5' }" @click="navigationDevice = 'h5'"><el-icon><Iphone /></el-icon>H5 配置</button>
             </div>
             <section class="banner-asset-card navigation-menu-card">
               <div class="banner-asset-heading"><div><h3>菜单入口</h3><p>每个入口独立配置名称及两种状态图片</p></div><el-button type="primary" plain :icon="Plus" @click="addNavigationEntry">添加入口</el-button></div>
@@ -384,18 +392,18 @@
                   <el-icon class="upload-icon"><UploadFilled /></el-icon>
                   <div class="upload-copy"><strong>上传导航箭头图</strong><p>支持 PNG、JPG、WebP，单次选择一张</p></div>
                 </el-upload>
-                <div v-if="navigationAssets.arrow" class="banner-asset-preview logo-asset-preview">
-                  <button :aria-label="`预览图片 ${navigationAssets.arrow.name}`" @click="previewImage(navigationAssets.arrow)"><img :src="navigationAssets.arrow.url" :alt="navigationAssets.arrow.name" /></button>
-                  <div><strong>{{ navigationAssets.arrow.name }}</strong><small>{{ navigationAssets.arrow.size }}</small></div>
+                <div v-if="currentNavigationConfig.arrow" class="banner-asset-preview logo-asset-preview">
+                  <button :aria-label="`预览图片 ${currentNavigationConfig.arrow.name}`" @click="previewImage(currentNavigationConfig.arrow)"><img :src="currentNavigationConfig.arrow.url" :alt="currentNavigationConfig.arrow.name" /></button>
+                  <div><strong>{{ currentNavigationConfig.arrow.name }}</strong><small>{{ currentNavigationConfig.arrow.size }}</small></div>
                 </div>
               </section>
             </div>
             <section class="banner-asset-card navigation-color-card">
               <div class="banner-asset-heading"><div><h3>吸顶背景色</h3><p>页面滚动后导航栏固定在顶部时使用</p></div></div>
               <div class="navigation-color-control">
-                <el-color-picker v-model="navigationStickyBackground" show-alpha />
-                <el-input v-model="navigationStickyBackground" aria-label="吸顶背景色" placeholder="#FFFFFF" />
-                <span class="navigation-color-swatch" :style="{ backgroundColor: navigationStickyBackground || 'transparent' }">预览</span>
+                <el-color-picker v-model="currentNavigationConfig.stickyBackground" show-alpha />
+                <el-input v-model="currentNavigationConfig.stickyBackground" aria-label="吸顶背景色" placeholder="#FFFFFF" />
+                <span class="navigation-color-swatch" :style="{ backgroundColor: currentNavigationConfig.stickyBackground || 'transparent' }">预览</span>
               </div>
             </section>
           </template>
@@ -444,6 +452,7 @@ import type { ActivityModule, ActivityRecord, ActivityStatus, ModuleType, Naviga
 
 const iconMap: Record<string, Component> = { DataBoard, Calendar, SetUp, List, Present, Picture, Promotion, TrendCharts }
 const moduleTypeIcons: Record<ModuleType, Component> = { background: Picture, banner: Picture, navigation: Sort, exchange: Goods, sign: Calendar, task: List, lottery: MagicStick, invite: User, community: Connection, event: Medal, rules: Document }
+type ActivityPlatform = 'pc' | 'h5'
 const pageTitleMap: Record<string, string> = { overview: '工作台', activities: '活动管理', editor: '页面编排', tasks: '任务中心', prizes: '奖品与奖池', assets: '素材中心', publish: '发布审核', analytics: '数据看板', settings: '系统设置', help: '帮助中心' }
 const statusOptions: ActivityStatus[] = ['进行中', '待发布', '草稿', '已结束']
 const templateOptions = ['经典补给模板', '完整互动模板', '金秋小队模板', '社区盲盒模板']
@@ -457,6 +466,8 @@ const taskKeyword = ref('')
 const taskCycleFilter = ref('全部')
 const moduleKeyword = ref('')
 const backgroundDevice = ref<'pc' | 'h5'>('pc')
+const bannerDevice = ref<ActivityPlatform>('pc')
+const navigationDevice = ref<ActivityPlatform>('pc')
 const editorTab = ref('modules')
 const selectedModuleId = ref('task')
 const createDialogVisible = ref(false)
@@ -474,15 +485,25 @@ const prizes = ref(structuredClone(initialPrizes))
 const activityForm = reactive({ name: 'PUBG 金秋双节补给行动', code: 'PUBG_AUTUMN_2026', displayTime: [new Date(2026, 8, 25), new Date(2026, 9, 11, 23, 59)], timezone: 'Asia/Shanghai', devices: ['PC', 'H5'], owner: '周沐', template: '金秋小队模板' })
 const newActivityForm = reactive({ name: '', template: '完整互动模板', device: 'PC + H5' })
 const backgroundSegments = reactive({ pc: [], h5: [] } as Record<'pc' | 'h5', Array<{ name: string; size: string; url: string }>>)
-const bannerAssets = reactive<{ banner: UploadedImageAsset | null; logo: UploadedImageAsset | null }>({ banner: null, logo: null })
-const navigationAssets = reactive<{ arrow: UploadedImageAsset | null }>({ arrow: null })
-const navigationStickyBackground = ref('#FFFFFF')
-const navigationEntries = reactive<NavigationMenuEntry[]>([{ id: 'navigation-entry-1', label: '活动首页', inactiveImage: null, activeImage: null }])
+const bannerAssets = reactive<Record<ActivityPlatform, { banner: UploadedImageAsset | null; logo: UploadedImageAsset | null }>>({
+  pc: { banner: null, logo: null },
+  h5: { banner: null, logo: null },
+})
+const currentBannerAssets = computed(() => bannerAssets[bannerDevice.value])
+const navigationConfigs = reactive<Record<ActivityPlatform, { entries: NavigationMenuEntry[]; arrow: UploadedImageAsset | null; stickyBackground: string }>>({
+  pc: { entries: [{ id: 'pc-navigation-entry-1', label: '活动首页', inactiveImage: null, activeImage: null }], arrow: null, stickyBackground: '#FFFFFF' },
+  h5: { entries: [{ id: 'h5-navigation-entry-1', label: '活动首页', inactiveImage: null, activeImage: null }], arrow: null, stickyBackground: '#FFFFFF' },
+})
+const currentNavigationConfig = computed(() => navigationConfigs[navigationDevice.value])
+const navigationEntries = computed(() => currentNavigationConfig.value.entries)
 const navigationEntryAssetSlots = [
   { key: 'inactive' as const, assetKey: 'inactiveImage' as const, title: '未选中图' },
   { key: 'active' as const, assetKey: 'activeImage' as const, title: '选中图' },
 ]
-const navigationEntryUploadHandlers = reactive<Record<string, ReturnType<typeof createNavigationEntryUploadHandlers>>>({ 'navigation-entry-1': createNavigationEntryUploadHandlers('navigation-entry-1') })
+const navigationEntryUploadHandlers = reactive<Record<string, ReturnType<typeof createNavigationEntryUploadHandlers>>>({
+  'pc-navigation-entry-1': createNavigationEntryUploadHandlers('pc', 'pc-navigation-entry-1'),
+  'h5-navigation-entry-1': createNavigationEntryUploadHandlers('h5', 'h5-navigation-entry-1'),
+})
 const activityRulesText = ref(`活动时间：9月21日-10月18日
 
 1.积分规则：用户可通过完成活动任务等方式获得并累计活动积分，活动积分可继承至后续NN x PUBG 活动中使用；
@@ -556,7 +577,7 @@ const enabledModules = computed(() => modules.value.filter((module) => module.en
 const contentModules = computed(() => enabledModules.value.filter((module) => module.type !== 'background' && module.type !== 'navigation'))
 const navigableModules = computed(() => contentModules.value.filter((module) => module.type !== 'rules'))
 /** 导航模块启用时展示运营配置的多入口菜单，否则沿用旧版从业务模块生成的导航名称。 */
-const pageNavigationLabels = computed(() => enabledModules.value.some((module) => module.type === 'navigation') ? navigationEntries.map((entry) => entry.label || '未命名入口') : navigableModules.value.map((module) => module.name))
+const pageNavigationLabels = computed(() => enabledModules.value.some((module) => module.type === 'navigation') ? navigationConfigs.pc.entries.map((entry) => entry.label || '未命名入口') : navigableModules.value.map((module) => module.name))
 const currentBackgroundSegments = computed(() => backgroundSegments[backgroundDevice.value])
 const enabledTaskCount = computed(() => tasks.value.filter((task) => task.enabled).length)
 const filteredTasks = computed(() => tasks.value.filter((task) => {
@@ -623,16 +644,19 @@ const addModule = (item: typeof availableModules[number]) => {
 
 /** 为菜单列表新增一个入口，并为该入口创建独立的选中图、未选中图上传处理器。 */
 const addNavigationEntry = () => {
-  const nextNumber = navigationEntries.length + 1
-  const id = `navigation-entry-${Date.now()}-${nextNumber}`
-  navigationEntries.push({ id, label: `菜单入口 ${nextNumber}`, inactiveImage: null, activeImage: null })
-  navigationEntryUploadHandlers[id] = createNavigationEntryUploadHandlers(id)
+  const platform = navigationDevice.value
+  const entries = navigationConfigs[platform].entries
+  const nextNumber = entries.length + 1
+  const id = `${platform}-navigation-entry-${Date.now()}-${nextNumber}`
+  entries.push({ id, label: `菜单入口 ${nextNumber}`, inactiveImage: null, activeImage: null })
+  navigationEntryUploadHandlers[id] = createNavigationEntryUploadHandlers(platform, id)
 }
 
 /** 删除指定导航菜单入口及其两张状态图片并释放预览资源，同时至少保留一个菜单入口。 */
 const removeNavigationEntry = (index: number) => {
-  if (navigationEntries.length <= 1 || index < 0 || index >= navigationEntries.length) return
-  const [removedEntry] = navigationEntries.splice(index, 1)
+  const entries = navigationConfigs[navigationDevice.value].entries
+  if (entries.length <= 1 || index < 0 || index >= entries.length) return
+  const [removedEntry] = entries.splice(index, 1)
   if (removedEntry) {
     for (const asset of [removedEntry.inactiveImage, removedEntry.activeImage]) {
       if (asset?.url.startsWith('blob:')) URL.revokeObjectURL(asset.url)
@@ -661,9 +685,10 @@ const handleBackgroundUpload = (file: import('element-plus').UploadFile) => {
 /** 保存 Banner 或 Logo 图片到各自独立的素材槽位，新上传文件会替换该槽位原有素材。 */
 const storeBannerAsset = (file: import('element-plus').UploadFile, target: 'banner' | 'logo') => {
   if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
-  const previousAsset = bannerAssets[target]
+  const deviceAssets = bannerAssets[bannerDevice.value]
+  const previousAsset = deviceAssets[target]
   if (previousAsset?.url.startsWith('blob:')) URL.revokeObjectURL(previousAsset.url)
-  bannerAssets[target] = {
+  deviceAssets[target] = {
     name: file.name,
     size: `${Math.max(1, Math.round(file.raw.size / 1024))} KB`,
     url: URL.createObjectURL(file.raw),
@@ -679,9 +704,10 @@ const handleLogoImageUpload = (file: import('element-plus').UploadFile) => store
 /** 保存导航箭头图到唯一的全局箭头素材槽位，并释放被替换的本地预览地址。 */
 const storeNavigationArrowAsset = (file: import('element-plus').UploadFile) => {
   if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
-  const previousAsset = navigationAssets.arrow
+  const currentConfig = navigationConfigs[navigationDevice.value]
+  const previousAsset = currentConfig.arrow
   if (previousAsset?.url.startsWith('blob:')) URL.revokeObjectURL(previousAsset.url)
-  navigationAssets.arrow = {
+  currentConfig.arrow = {
     name: file.name,
     size: `${Math.max(1, Math.round(file.raw.size / 1024))} KB`,
     url: URL.createObjectURL(file.raw),
@@ -692,9 +718,9 @@ const storeNavigationArrowAsset = (file: import('element-plus').UploadFile) => {
 const handleNavigationArrowUpload = (file: import('element-plus').UploadFile) => storeNavigationArrowAsset(file)
 
 /** 按菜单入口 ID 保存对应的选中/未选中图片，并回收被替换素材的本地预览地址。 */
-const storeNavigationEntryAsset = (file: import('element-plus').UploadFile, entryId: string, state: 'inactive' | 'active') => {
+const storeNavigationEntryAsset = (file: import('element-plus').UploadFile, platform: ActivityPlatform, entryId: string, state: 'inactive' | 'active') => {
   if (!file.raw || !file.raw.type.startsWith('image/')) { ElMessage.warning('请选择有效的图片文件'); return }
-  const entry = navigationEntries.find((item) => item.id === entryId)
+  const entry = navigationConfigs[platform].entries.find((item) => item.id === entryId)
   if (!entry) return
   const assetKey = state === 'active' ? 'activeImage' : 'inactiveImage'
   const previousAsset = entry[assetKey]
@@ -707,10 +733,10 @@ const storeNavigationEntryAsset = (file: import('element-plus').UploadFile, entr
 }
 
 /** 为指定菜单入口生成各自的图片上传处理器，确保每个入口只更新自己的两张状态图。 */
-function createNavigationEntryUploadHandlers(entryId: string) {
+function createNavigationEntryUploadHandlers(platform: ActivityPlatform, entryId: string) {
   return {
-    inactive: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, entryId, 'inactive'),
-    active: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, entryId, 'active'),
+    inactive: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, platform, entryId, 'inactive'),
+    active: (file: import('element-plus').UploadFile) => storeNavigationEntryAsset(file, platform, entryId, 'active'),
   }
 }
 
